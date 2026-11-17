@@ -246,7 +246,9 @@ $saverProc = $null
 $ok = $true
 try {
     if ($App) {
-        # The app writes the same status lines to its log as the script prints.
+        # The app writes the same status lines to its log as the script prints. Its own
+        # settings file says the legal notice was accepted, so no prompt stops the test.
+        [System.IO.File]::WriteAllLines("$work\settings.ini", [string[]]@('NoticeVersion=1'))
         $appArgs = @('/process', 'msedge', '/window-title', '"Fake Teams meeting*"', '/out', "`"$out`"", '/log', "`"$work\saver.out`"",
             '/grace', '10', '/save', '1', '/raw', "`"$work\raw.jsonl`"", '/settings', "`"$work\settings.ini`"")
         if (-not $ShowApp) { $appArgs += '/tray' }
@@ -255,7 +257,7 @@ try {
     else {
         $saverArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$saver`"", '-OutDir', "`"$out`"",
             '-ProcessName', 'msedge', '-WindowTitle', '"Fake Teams meeting*"', '-GraceSeconds', '10', '-SaveEverySeconds', '1',
-            '-RawLog', "`"$work\raw.jsonl`"")
+            '-RawLog', "`"$work\raw.jsonl`"", '-AcceptNotice')
         if ($Watch) { $saverArgs += '-Watch' }
         if ($SaverVerbose) { $saverArgs += '-Verbose' }
         $saverProc = Start-Process -FilePath $saverHost -ArgumentList $saverArgs -NoNewWindow -PassThru `

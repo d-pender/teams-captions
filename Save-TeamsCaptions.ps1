@@ -45,6 +45,10 @@
     Process whose windows hold the captions. Default ms-teams (new Teams); the tests point
     it at a browser showing a fake captions page.
 
+.PARAMETER AcceptNotice
+    Accept the legal notice for this run without being asked, for scripted use. Otherwise
+    the first run shows the notice and asks you to type YES, and remembers your answer.
+
 .EXAMPLE
     .\Save-TeamsCaptions.ps1
 
@@ -61,7 +65,8 @@ param(
     [string]$RawLog,
     [string]$FromRawLog,
     [string]$WindowTitle = '*',
-    [string]$ProcessName = 'ms-teams'
+    [string]$ProcessName = 'ms-teams',
+    [switch]$AcceptNotice
 )
 
 $ErrorActionPreference = 'Stop'
@@ -74,7 +79,7 @@ if (-not ('TeamsCaptions.CaptionWatcher' -as [type])) {
         [System.Windows.Automation.ControlType].Assembly.Location)
     # PowerShell 7 drops its default references once any are given, so pass those too.
     if ($PSVersionTable.PSEdition -eq 'Core') { $refs += @(Get-ChildItem (Join-Path $PSHOME 'ref') -Filter *.dll | ForEach-Object FullName) }
-    Add-Type -Path (Join-Path $src 'CaptionLog.cs'), (Join-Path $src 'CaptionWatcher.cs') -ReferencedAssemblies $refs
+    Add-Type -Path (Join-Path $src 'CaptionLog.cs'), (Join-Path $src 'CaptionWatcher.cs'), (Join-Path $src 'Settings.cs') -ReferencedAssemblies $refs
 }
 
 function Write-Status([string]$Message) { Write-Host ('{0:HH:mm:ss}  {1}' -f (Get-Date), $Message) }
@@ -114,6 +119,26 @@ if ($FromRawLog) {
     }
     if ($current) { Save-Rebuilt $current }
     return
+}
+
+# The legal notice: shown once, and nothing is saved until it is accepted.
+$settings = New-Object TeamsCaptions.Settings ([TeamsCaptions.Settings]::DefaultPath)
+if (-not $settings.NoticeAccepted -and -not $AcceptNotice) {
+    Write-Host ''
+    Write-Host ([TeamsCaptions.LegalNotice]::Title)
+    foreach ($paragraph in [TeamsCaptions.LegalNotice]::Paragraphs) { Write-Host ''; Write-Host $paragraph }
+    Write-Host ''
+    if (-not [Environment]::UserInteractive -or [Console]::IsInputRedirected) {
+        Write-Host 'Run this once in a console and type YES, or pass -AcceptNotice. Nothing was saved.'
+        exit 1
+    }
+    $answer = Read-Host 'Type YES to confirm that you accept this responsibility'
+    if ($answer.Trim() -ne 'YES') {
+        Write-Host 'Not accepted. Nothing was saved.'
+        exit 1
+    }
+    $settings.AcceptNotice((Get-Date))
+    $settings.Save()
 }
 
 # One saver at a time (this script or the app): a second would write a second file for

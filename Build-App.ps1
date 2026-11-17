@@ -86,7 +86,7 @@ $cscArgs = @('/nologo', '/target:winexe', '/optimize+', '/warn:4', "/out:$exe",
     "/win32icon:$app\TeamsCaptions.ico", "/win32manifest:$app\app.manifest",
     "/resource:$app\MainWindow.xaml,TeamsCaptions.MainWindow.xaml",
     "/resource:$app\TeamsCaptions.ico,TeamsCaptions.TeamsCaptions.ico") + $refs +
-    @("$src\CaptionLog.cs", "$src\CaptionWatcher.cs", "$app\App.cs")
+    @("$src\CaptionLog.cs", "$src\CaptionWatcher.cs", "$src\Settings.cs", "$app\App.cs")
 & (Join-Path $fw 'csc.exe') @cscArgs
 if ($LASTEXITCODE -ne 0) { throw "The build failed (csc exit code $LASTEXITCODE)." }
 "Built $exe"

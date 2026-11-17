@@ -27,8 +27,8 @@ using Forms = System.Windows.Forms;
 [assembly: AssemblyProduct("Teams Captions")]
 [assembly: AssemblyDescription("Saves Microsoft Teams live captions for later review")]
 [assembly: AssemblyCopyright("Copyright (c) 2026 Daniel Pender")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyFileVersion("1.0.1.0")]
 
 namespace TeamsCaptions.App
 {
@@ -128,44 +128,6 @@ namespace TeamsCaptions.App
                 i++;
             }
             return o;
-        }
-    }
-
-    // %APPDATA%\Teams Captions\settings.ini, as Name=value lines.
-    internal sealed class Settings
-    {
-        public string OutDir;
-        public bool TrayTipShown;
-        public double WindowWidth;    // in device-independent units; 0 = the default
-        public double WindowHeight;
-        private readonly string path;
-
-        public Settings(string path)
-        {
-            this.path = path;
-            if (!File.Exists(path)) return;
-            foreach (string line in File.ReadAllLines(path))
-            {
-                int eq = line.IndexOf('=');
-                if (eq <= 0) continue;
-                string name = line.Substring(0, eq).Trim(), value = line.Substring(eq + 1).Trim();
-                if (name == "OutDir" && value.Length > 0) OutDir = value;
-                else if (name == "TrayTipShown") TrayTipShown = value == "1";
-                else if (name == "WindowWidth") double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out WindowWidth);
-                else if (name == "WindowHeight") double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out WindowHeight);
-            }
-        }
-
-        public void Save()
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
-            File.WriteAllLines(path, new[]
-            {
-                "OutDir=" + (OutDir ?? string.Empty),
-                "TrayTipShown=" + (TrayTipShown ? "1" : "0"),
-                "WindowWidth=" + WindowWidth.ToString("0", CultureInfo.InvariantCulture),
-                "WindowHeight=" + WindowHeight.ToString("0", CultureInfo.InvariantCulture)
-            });
         }
     }
 
@@ -280,9 +242,8 @@ namespace TeamsCaptions.App
             this.options = options;
             this.showEvent = showEvent;
             this.exitEvent = exitEvent;
-            string roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            settings = new Settings(options.SettingsPath ?? Path.Combine(roaming, "Teams Captions", "settings.ini"));
+            settings = new Settings(options.SettingsPath ?? Settings.DefaultPath);
             log = new Log(options.LogPath ?? Path.Combine(local, "Teams Captions", "TeamsCaptions.log"));
         }
 
@@ -294,6 +255,20 @@ namespace TeamsCaptions.App
             log.Write("Teams Captions started; transcripts go to " + outDir);
 
             BuildWindow();
+            if (!settings.NoticeAccepted)
+            {
+                if (!AskNotice())
+                {
+                    log.Write("The legal notice was not accepted; Teams Captions closed without saving anything.");
+                    exiting = true;   // so closing the window really closes it
+                    window.Close();
+                    app.Shutdown();
+                    return;
+                }
+                settings.AcceptNotice(DateTime.Now);
+                SaveSettings();
+                log.Write("The legal notice was accepted.");
+            }
             BuildTray();
             StartSignalThread();
 
@@ -521,6 +496,61 @@ namespace TeamsCaptions.App
             return path;
         }
 
+        // Shows the legal notice once, before anything is saved. True when the user accepts it.
+        private bool AskNotice()
+        {
+            var dialog = new Window();
+            dialog.Title = "Teams Captions";
+            dialog.Icon = window.Icon;
+            dialog.Width = 520;
+            dialog.SizeToContent = SizeToContent.Height;
+            dialog.ResizeMode = ResizeMode.NoResize;
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            dialog.Topmost = true;   // it may appear at sign-in, behind other windows otherwise
+            dialog.FontFamily = window.FontFamily;
+            dialog.FontSize = window.FontSize;
+            dialog.Background = window.Background;
+            dialog.Resources.MergedDictionaries.Add(window.Resources);   // the main window's button style
+
+            var panel = new StackPanel();
+            panel.Margin = new Thickness(22, 18, 22, 18);
+            var title = new TextBlock();
+            title.Text = LegalNotice.Title;
+            title.FontSize = 18;
+            title.FontWeight = FontWeights.SemiBold;
+            title.Margin = new Thickness(0, 0, 0, 12);
+            panel.Children.Add(title);
+            foreach (string paragraph in LegalNotice.Paragraphs) panel.Children.Add(Paragraph(paragraph));
+            panel.Children.Add(Paragraph("Choose \"I understand\" to confirm that you accept this responsibility. You'll be asked only once."));
+
+            var buttons = new StackPanel();
+            buttons.Orientation = Orientation.Horizontal;
+            buttons.HorizontalAlignment = HorizontalAlignment.Right;
+            buttons.Margin = new Thickness(0, 8, 0, 0);
+            var accept = new Button();
+            accept.Content = "I understand";
+            accept.IsDefault = true;
+            accept.Click += delegate { dialog.DialogResult = true; };
+            var exit = new Button();
+            exit.Content = "Exit";
+            exit.IsCancel = true;
+            exit.Margin = new Thickness(0);
+            buttons.Children.Add(accept);
+            buttons.Children.Add(exit);
+            panel.Children.Add(buttons);
+            dialog.Content = panel;
+            return dialog.ShowDialog() == true;
+        }
+
+        private static TextBlock Paragraph(string text)
+        {
+            var block = new TextBlock();
+            block.Text = text;
+            block.TextWrapping = TextWrapping.Wrap;
+            block.Margin = new Thickness(0, 0, 0, 10);
+            return block;
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT { public int X, Y; }
 
@@ -683,6 +713,7 @@ namespace TeamsCaptions.App
 
         private void ShowBalloon(string title, string text, string openPath)
         {
+            if (tray == null) return;
             balloonPath = openPath;
             tray.ShowBalloonTip(6000, title, text, Forms.ToolTipIcon.None);
         }

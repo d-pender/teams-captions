@@ -8,6 +8,20 @@ Teams Captions is an independent tool, not made by or affiliated with Microsoft.
 
 ![The Teams Captions window during a meeting](screenshot.png)
 
+## Legal notice: you're responsible for how you use it
+
+Teams Captions saves the text of what people say in Teams meetings. Saving a conversation may count as recording it, and recording laws vary: in some places, including several US states such as California and Washington, everyone in the conversation must consent first; in others, such as under the EU's GDPR, a transcript is personal data with its own rules. Workplaces often have their own policies too.
+
+Teams Captions does not notify anyone in the meeting. It is solely your responsibility, as the user, to:
+
+- find out which laws and policies apply to you and to everyone in the meeting;
+- tell the other participants and get their consent wherever the law or your organization requires it;
+- store, share and delete transcripts lawfully.
+
+Don't use Teams Captions where you don't have the right to keep a record of the conversation. The author provides it as is, without warranty, and accepts no liability for how it is used (see the [licence](LICENSE)). Nothing here is legal advice; if you're unsure, ask a lawyer.
+
+The app shows this notice the first time it runs and saves nothing until you accept it.
+
 ## Install
 
 You need Windows 10 or 11 and the new Teams app (`ms-teams.exe`). No admin rights are needed.
@@ -16,7 +30,7 @@ You need Windows 10 or 11 and the new Teams app (`ms-teams.exe`). No admin right
 
 1. Get `TeamsCaptions.exe` from the [latest release](https://github.com/d-pender/teams-captions/releases/latest).
 2. Move it to a folder you'll keep, not Downloads; for example `Documents\Teams Captions`.
-3. Double-click it. The exe isn't code-signed, so Windows may say it protected your PC: choose **More info**, then **Run anyway**.
+3. Double-click it. The exe isn't code-signed, so Windows may say it protected your PC: choose **More info**, then **Run anyway**. The first time, it shows the legal notice above; choose **I understand** to go on.
 4. In the app, tick **Start when I sign in** to have it running in every meeting. For a desktop icon, right-click the exe and choose Show more options > Send to > Desktop (create shortcut).
 
 To update, exit Teams Captions from its notification-area icon, replace the exe and start it again. To remove it, untick **Start when I sign in**, exit it and delete the exe.
@@ -81,7 +95,6 @@ There's one paragraph per speaker turn, and a new one after every two minutes of
 - Teams keeps only the latest captions on screen (about 45 lines). Anything that scrolled away before saving started is gone, so have the app running before the meeting.
 - Lines already on screen when saving starts all get the start time.
 - Captions are speech recognition, so expect wrong words and names. When the organizer starts Teams transcription, that transcript is the official one.
-- Others in the meeting aren't told, as they are with Teams transcription. Let people know you keep notes this way, and follow your organization's policy, especially in meetings with outside guests.
 - While the app watches, Teams keeps its accessibility support switched on, which costs Teams a little extra work. The app checks big windows, like the main Teams window, only every 30 seconds.
 - Tested with Teams 26288.2004.5269.3420 (November 2026), with captions popped out, pinned, and in the meeting window.
 
@@ -104,8 +117,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File Save-TeamsCaptions.ps1
 | `-RawLog` | none | Also log every screen to this file as JSON lines, for troubleshooting. It holds the meeting text, so delete it when done |
 | `-FromRawLog` | none | Rebuild transcripts from such a log, then stop |
 | `-ProcessName` | `ms-teams` | Process whose windows hold the captions; the tests point it at Edge |
+| `-AcceptNotice` | off | Accept the legal notice for this run without being asked, for scripted use |
 
-`-Verbose` also shows errors the saver handled and reads that took over a second.
+The first run shows the legal notice and asks you to type YES; your answer is remembered, and the app and the script share it. `-Verbose` also shows errors the saver handled and reads that took over a second.
 
 The app keeps its settings in `%APPDATA%\Teams Captions\settings.ini` and a log of what it did in `%LOCALAPPDATA%\Teams Captions\TeamsCaptions.log`.
 
