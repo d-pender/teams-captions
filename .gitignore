@@ -1,0 +1,5 @@
+# Build output (Build-App.ps1)
+bin/
+
+# A save in progress
+*.tmp
