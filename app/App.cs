@@ -26,6 +26,7 @@ using Forms = System.Windows.Forms;
 [assembly: AssemblyTitle("Teams Captions")]
 [assembly: AssemblyProduct("Teams Captions")]
 [assembly: AssemblyDescription("Saves Microsoft Teams live captions for later review")]
+[assembly: AssemblyCopyright("Copyright (c) 2026 Daniel Pender")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
 

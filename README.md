@@ -10,9 +10,20 @@ Teams Captions is an independent tool, not made by or affiliated with Microsoft.
 
 ## Install
 
-You need Windows 10 or 11 and the new Teams app (`ms-teams.exe`). Nothing else: the app is built with the C# compiler that comes with Windows.
+You need Windows 10 or 11 and the new Teams app (`ms-teams.exe`). No admin rights are needed.
 
-Download the repository, as a ZIP from GitHub or with `git clone`, then run this in its folder:
+### Download the app
+
+1. Get `TeamsCaptions.exe` from the [latest release](https://github.com/d-pender/teams-captions/releases/latest).
+2. Move it to a folder you'll keep, not Downloads; for example `Documents\Teams Captions`.
+3. Double-click it. The exe isn't code-signed, so Windows may say it protected your PC: choose **More info**, then **Run anyway**.
+4. In the app, tick **Start when I sign in** to have it running in every meeting. For a desktop icon, right-click the exe and choose Show more options > Send to > Desktop (create shortcut).
+
+To update, exit Teams Captions from its notification-area icon, replace the exe and start it again. To remove it, untick **Start when I sign in**, exit it and delete the exe.
+
+### Or build it yourself
+
+The app is built with the C# compiler that comes with Windows, so nothing else needs installing. Download the repository, as a ZIP from GitHub or with `git clone`, then run this in its folder:
 
 ```bash
 powershell -NoProfile -ExecutionPolicy Bypass -File Build-App.ps1 -Install -StartAtSignIn -Launch
